@@ -24,7 +24,6 @@ tS_PU200 = fS_PU200.Get("tree")
 
 ###
 c_beta = TCanvas("c_beta", "c_beta", 500, 500)
-
 hS_beta = TH1D("hS_beta", "hS_beta;#beta resolution = (#beta_{gen} - #beta_{RPC})/#beta_{gen}", 100, -2, 2)
 '''
 tS_noPU.Draw("(gen1_p4.Beta()-fit_beta1)/gen1_p4.Beta()>>hS_beta", "TMath::Abs(gen1_p4.Eta()) < 1.8 && fit_qual1 < 1e9", "goff")

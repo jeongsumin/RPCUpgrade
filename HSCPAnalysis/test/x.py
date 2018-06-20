@@ -29,7 +29,6 @@ tS_PU200 = fS_PU200.Get("tree")
 c_beta_Eff = TCanvas("c_beta_Eff", "c_beta_Eff", 1000, 1000)
 c_beta_Eff.SetGridx()
 c_beta_Eff.SetGridy()
-#gStyle.SetOptTitle(1)
 
 #hS_beta_genTot = TH1D("hS_beta_genTot", "hS_beta_genTot;Total Generated #beta", 100, -1, 2)
 #hS_beta_gen = TH1D("hS_beta_gen", "hS_beta_gen;Generated #beta", 100, -1, 2)
