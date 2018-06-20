@@ -23,52 +23,18 @@ class TreeAnalyzer {
     // Fixed size dimensions of array or collections stored in the TTree if any.
 
     // Declaration of leaf types
-    Short_t         gen1_pdgId;
+    Int_t           gen1_pdgId;
     Double_t        gen1_pt;
     Double_t        gen1_eta;
     Double_t        gen1_phi;
     Double_t        gen1_m;
     Double_t        gen1_beta;
-    Short_t         gen2_pdgId;
+    Int_t           gen2_pdgId;
     Double_t        gen2_pt;
     Double_t        gen2_eta;
     Double_t        gen2_phi;
     Double_t        gen2_m;
     Double_t        gen2_beta;
-    UShort_t        simDigi1_n;
-    Bool_t          simDigi1_isBarrel[1000];   //[simDigi1_n]
-    Bool_t          simDigi1_isIRPC[1000];   //[simDigi1_n]
-    Short_t         simDigi1_sector[1000];   //[simDigi1_n]
-    Short_t         simDigi1_station[1000];   //[simDigi1_n]
-    Short_t         simDigi1_wheel[1000];   //[simDigi1_n]
-    Short_t         simDigi1_layer[1000];   //[simDigi1_n]
-    Short_t         simDigi1_disk[1000];   //[simDigi1_n]
-    Short_t         simDigi1_ring[1000];   //[simDigi1_n]
-    Double_t        simDigi1_x[1000];   //[simDigi1_n]
-    Double_t        simDigi1_y[1000];   //[simDigi1_n]
-    Double_t        simDigi1_z[1000];   //[simDigi1_n]
-    Double_t        simDigi1_tof[1000];   //[simDigi1_n]
-    Double_t        simDigi1_t0[1000];   //[simDigi1_n]
-    Double_t        simDigi1_lx[1000];   //[simDigi1_n]
-    Double_t        simDigi1_ly[1000];   //[simDigi1_n]
-    Short_t         simDigi1_bx[1000];   //[simDigi1_n]
-    UShort_t        simDigi2_n;
-    Bool_t          simDigi2_isBarrel[1000];   //[simDigi2_n]
-    Bool_t          simDigi2_isIRPC[1000];   //[simDigi2_n]
-    Short_t         simDigi2_sector[1000];   //[simDigi2_n]
-    Short_t         simDigi2_station[1000];   //[simDigi2_n]
-    Short_t         simDigi2_wheel[1000];   //[simDigi2_n]
-    Short_t         simDigi2_layer[1000];   //[simDigi2_n]
-    Short_t         simDigi2_disk[1000];   //[simDigi2_n]
-    Short_t         simDigi2_ring[1000];   //[simDigi2_n]
-    Double_t        simDigi2_x[1000];   //[simDigi2_n]
-    Double_t        simDigi2_y[1000];   //[simDigi2_n]
-    Double_t        simDigi2_z[1000];   //[simDigi2_n]
-    Double_t        simDigi2_tof[1000];   //[simDigi2_n]
-    Double_t        simDigi2_t0[1000];   //[simDigi2_n]
-    Double_t        simDigi2_lx[1000];   //[simDigi2_n]
-    Double_t        simDigi2_ly[1000];   //[simDigi2_n]
-    Short_t         simDigi2_bx[1000];   //[simDigi2_n]
     UShort_t        rpcHit_n;
     Bool_t          rpcHit_isBarrel[1000];   //[rpcHit_n]
     Bool_t          rpcHit_isIRPC[1000];   //[rpcHit_n]
@@ -102,6 +68,14 @@ class TreeAnalyzer {
     UShort_t        muon_nIRPC[100];   //[muon_n]
     Double_t        muon_genDR[100];   //[muon_n]
     Short_t         muon_genPdgId[100];   //[muon_n]
+    UShort_t        simDigi1_n; 
+    Double_t        simDigi1_x[1000];   //[simDigi1_n]
+    Double_t        simDigi1_y[1000];   //[simDigi1_n]
+    Double_t        simDigi1_z[1000];   //[simDigi1_n]
+    UShort_t        simDigi2_n;
+    Double_t        simDigi2_x[1000];   //[simDigi2_n]
+    Double_t        simDigi2_y[1000];   //[simDigi2_n]
+    Double_t        simDigi2_z[1000];   //[simDigi2_n]
 
     // List of branches
     TBranch        *b_gen1_pdgId;   //!

@@ -17,10 +17,11 @@ const int bxLo = -8, nBx = 17;
 const unsigned minNhitCluster = 2;
 enum class ClusterAlgo { GenMatch, Histogram };
 enum class FitAlgo { BxContrained, FitSlope };
-ClusterAlgo clusterAlgo = ClusterAlgo::Histogram;
-//ClusterAlgo clusterAlgo = ClusterAlgo::GenMatch;
+//ClusterAlgo clusterAlgo = ClusterAlgo::Histogram;
+ClusterAlgo clusterAlgo = ClusterAlgo::GenMatch;
 FitAlgo fitAlgo = FitAlgo::FitSlope;
 //FitAlgo fitAlgo = FitAlgo::BxContrained;
+
 
 double deltaPhi(const double phi1, const double phi2)
 {
@@ -68,6 +69,7 @@ struct HEtaPhiBeta
     return res;
   }
 
+
   void fill(const double eta, const double phi, const double beta, const unsigned idx)
   {
     const unsigned ibin = findBin(eta, phi, beta);
@@ -96,7 +98,14 @@ std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLore
         match = j;
       }
     }
-    if ( match >= 0 ) clusters.at(match).push_back(i);
+    if ( match >= 0 ) {
+      for ( unsigned k=0; k<2; ++k ) { 
+        const double dEta = p4s[k].Eta()-pos.Eta();
+        const double dPhi = p4s[k].Vect().DeltaPhi(pos);
+     
+        if ( std::abs(dEta) < 0.2 && std::abs(dPhi) < 0.02 ) clusters.at(match).push_back(i);
+      }
+    }
   }
 
   return clusters;
@@ -148,12 +157,13 @@ std::vector<double> TreeAnalyzer::fitTrackBxConstrained(const std::vector<unsign
 
     sumEta += pos.Eta();
     sumEta2 += pos.Eta()*pos.Eta();
-    if ( nValidBeta == 0 ) firstPhi = pos.Phi();
+    if ( nValidBeta == 0 )  firstPhi = pos.Phi();
     else {
       const double dphi = pos.Phi()-firstPhi;
       sumDphi += dphi;
       sumDphi2 += dphi*dphi;
     }
+
 
     ++nValidBeta;
   }
@@ -167,7 +177,7 @@ std::vector<double> TreeAnalyzer::fitTrackBxConstrained(const std::vector<unsign
 
 std::vector<double> TreeAnalyzer::fitTrackSlope(const std::vector<unsigned>& hits) const
 {
-  std::vector<double> result = {1e9, 0, 0, 0, 0};
+  std::vector<double> result = {1e9, 0, 1e9, 0, 0};
   const unsigned n = hits.size();
   if ( n <= 2 ) return result;
 
@@ -197,13 +207,18 @@ std::vector<double> TreeAnalyzer::fitTrackSlope(const std::vector<unsigned>& hit
   const int nbx = std::round(t0/25.);
   const double bxPull = t0 - nbx*25;
   //const double bxPull = t0/25.;
+  const double RelativeSlopeErr = bStdErr/b;
   result = {bxPull, beta, betaErr, t0, t0Err};
+  //result = {bxPull, beta, RelativeSlopeErr, t0, t0Err};
 
   return result;
 }
 
 void TreeAnalyzer::Loop(TFile* fout)
 {
+  int oneHSCP = 0, twoHSCP = 0, nEvent = 0;
+  double oneTotEff = 0.0;
+  double twoTotEff = 0.0;
   fout->cd();
   TTree* tree = new TTree("tree", "tree");
 
@@ -234,6 +249,30 @@ void TreeAnalyzer::Loop(TFile* fout)
   tree->Branch("fit_nhit1", &out_fit_nhits[0], "fit_nhit1/i");
   tree->Branch("fit_nhit2", &out_fit_nhits[1], "fit_nhit2/i");
 
+  TH1* hDeta_1 = new TH1F("hDeta_1", "positive HSCP deta(gen-sim)", 100, -0.2, 0.2);
+  TH1* hDphi_1 = new TH1F("hDphi_1", "positive HSCP dphi", 100, -0.03, 0.03);  
+  tree->Branch("hDeta_1", &hDeta_1, "TH1F");
+  tree->Branch("hDphi_1", &hDphi_1, "TH1F");
+
+  TH1* hDeta_2 = new TH1F("hDeta_2", "negative HSCP deta(gen-sim)", 100, -0.2, 0.2);
+  TH1* hDphi_2 = new TH1F("hDphi_2", "negative HSCP dphi", 100, -0.03, 0.03);
+  tree->Branch("hDeta_2", &hDeta_2, "TH1F");
+  tree->Branch("hDphi_2", &hDphi_2, "TH1F");
+
+  TH1* hDeta_rpcHit_1 = new TH1F("hDeta_rpcHit_1", "positive HSCP deta(gen-rpcHit)", 100, -0.2, 0.2);
+  TH1* hDphi_rpcHit_1 = new TH1F("hDphi_rpcHit_1", "positive HSCP dphi(gen-rpcHit)", 100, -0.02, 0.02);
+  tree->Branch("hDeta_rpcHit_1", &hDeta_rpcHit_1, "TH1F");
+  tree->Branch("hDphi_rpcHit_1", &hDphi_rpcHit_1, "TH1F");
+
+  TH1* hDeta_rpcHit_2 = new TH1F("hDeta_rpcHit_2", "negative HSCP deta(gen-rpcHit)", 100, -0.2, 0.2);
+  TH1* hDphi_rpcHit_2 = new TH1F("hDphi_rpcHit_2", "negative HSCP dphi(gen-rpcHit)", 100, -0.02, 0.02);
+  tree->Branch("hDeta_rpcHit_2", &hDeta_rpcHit_2, "TH1F");
+  tree->Branch("hDphi_rpcHit_2", &hDphi_rpcHit_2, "TH1F");
+
+  float out_t0[2];
+  tree->Branch("t0_1", &out_t0[0], "t0_1/F");
+  tree->Branch("t0_2", &out_t0[1], "t0_2/F");
+
   if (fChain == 0) return;
   Long64_t nentries = fChain->GetEntries();
   Long64_t nbytes = 0, nb = 0;
@@ -259,8 +298,12 @@ void TreeAnalyzer::Loop(TFile* fout)
       out_fit_quals[i] = 1e9;
       out_fit_betas[i] = 0;
       out_fit_nhits[i] = 0;
+      out_t0[i] = 1e9;
     }
 
+    //pdgId, pt
+    if ( gen1_pdgId == 0 or gen2_pdgId == 0 ) continue;
+    //if ( gen1_pt < 100 or gen2_pt < 100 ) continue;
     // Fill particles
     if ( gen1_pdgId != 0 ) {
       out_gens_p4[0].SetPtEtaPhiM(gen1_pt, gen1_eta, gen1_phi, gen1_m);
@@ -287,24 +330,62 @@ void TreeAnalyzer::Loop(TFile* fout)
     std::vector<std::vector<unsigned>> hitClusters;
     if      ( clusterAlgo == ClusterAlgo::GenMatch  ) hitClusters = clusterHitsByGenP4s(out_gens_p4);
     else if ( clusterAlgo == ClusterAlgo::Histogram ) hitClusters = clusterHitsByEtaPhi();
-    std::sort(hitClusters.begin(), hitClusters.end(),
-              [](const std::vector<unsigned>& a, const std::vector<unsigned>& b){return a.size() > b.size();});
+    //std::sort(hitClusters.begin(), hitClusters.end(),
+              //[](const std::vector<unsigned>& a, const std::vector<unsigned>& b){return a.size() > b.size();});
     for ( unsigned i=0, n=std::min(2ul, hitClusters.size()); i<n; ++i ) {
       std::vector<double> res;
       if      ( fitAlgo == FitAlgo::BxContrained ) res = fitTrackBxConstrained(hitClusters[i]);
       else if ( fitAlgo == FitAlgo::FitSlope     ) res = fitTrackSlope(hitClusters[i]);
 
-      out_fit_quals[i] = res[0];
+      for ( unsigned j : hitClusters[i] ) {
+	const TVector3 pos_rpcHit(rpcHit_x[j], rpcHit_y[j], rpcHit_z[j]);
+
+        //if( i == 0 && std::abs(out_gens_p4[0].Eta()) > 1.8 && std::abs(out_gens_p4[0].Eta()) <= 2.4) {
+        if( i == 0 ) {
+          hDeta_rpcHit_1->Fill(out_gens_p4[0].Eta()-pos_rpcHit.Eta());
+          hDphi_rpcHit_1->Fill(out_gens_p4[0].Phi()-pos_rpcHit.Phi()); 
+        }
+        //else if ( i == 1 && std::abs(out_gens_p4[1].Eta()) > 1.8 && std::abs(out_gens_p4[1].Eta()) <= 2.4) {
+        else if ( i == 1 ) {
+          hDeta_rpcHit_2->Fill(out_gens_p4[1].Eta()-pos_rpcHit.Eta());
+          hDphi_rpcHit_2->Fill(out_gens_p4[1].Phi()-pos_rpcHit.Phi());
+        }
+      }
+
+      //out_fit_quals[i] = res[0]; //bxErr2, using at BxConstrained algo
+      out_fit_quals[i] = res[2]; //betaErr, using at FitSlope algo 
       out_fit_betas[i] = res[1];
       out_fit_nhits[i] = hitClusters[i].size();
-    }
+      //out_t0[i] = res[3];
 
-    if ( out_fit_quals[0] >= 1e9 or out_fit_quals[1] >= 1e9 ) continue;
+      /////////simDigi///////////////
+      const TVector3 pos1(simDigi1_x[i], simDigi1_y[i], simDigi1_z[i]);
+
+      hDeta_1->Fill(out_gens_p4[0].Eta()-pos1.Eta());
+      hDphi_1->Fill(out_gens_p4[0].Phi()-pos1.Phi());
+        
+      const TVector3 pos2(simDigi2_x[i], simDigi2_y[i], simDigi2_z[i]);
+
+      hDeta_2->Fill(out_gens_p4[1].Eta()-pos2.Eta());
+      hDphi_2->Fill(out_gens_p4[1].Phi()-pos2.Phi());
+    }
+        
+    if ( out_fit_quals[0] < 1e9 and out_fit_quals[1] < 1e9) ++twoHSCP;
+    if ( out_fit_quals[0] < 1e9 or out_fit_quals[1] < 1e9) ++oneHSCP;
+    ++nEvent;
+    //if ( out_fit_quals[0] >= 1e9 or out_fit_quals[1] >= 1e9 ) continue;
 
     tree->Fill();
+    
+    
   }
   cout << "Processing " << nentries << "/" << nentries << "\n"; // Just to print last event
-
+  oneTotEff = (double)oneHSCP/nEvent;
+  twoTotEff = (double)twoHSCP/nEvent;
+  cout << "Total Efficiency of single HSCP : " << oneHSCP << "/" << nEvent << " = " << oneTotEff << endl;
+  cout << "Total Efficiency of pair HSCP : " << twoHSCP << "/" << nEvent << " = " << twoTotEff << endl;
   fout->Write();
-}
 
+  
+
+}
