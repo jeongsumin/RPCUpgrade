@@ -19,8 +19,8 @@ enum class ClusterAlgo { GenMatch, Histogram };
 enum class FitAlgo { BxContrained, FitSlope };
 //ClusterAlgo clusterAlgo = ClusterAlgo::Histogram;
 ClusterAlgo clusterAlgo = ClusterAlgo::GenMatch;
-FitAlgo fitAlgo = FitAlgo::FitSlope;
-//FitAlgo fitAlgo = FitAlgo::BxContrained;
+//FitAlgo fitAlgo = FitAlgo::FitSlope;
+FitAlgo fitAlgo = FitAlgo::BxContrained;
 
 
 double deltaPhi(const double phi1, const double phi2)
@@ -84,30 +84,75 @@ struct HEtaPhiBeta
 std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLorentzVector p4s[]) const
 {
   // Cluster hits along the GenParticle's four momentum, just for initial testing.
-  std::vector<std::vector<unsigned>> clusters;
+  std::vector< std::vector<unsigned> > clusters;
   clusters.resize(2);
-
+/*  
   for ( unsigned i=0; i<rpcHit_n; ++i ) {
-    const TVector3 pos(rpcHit_x[i], rpcHit_y[i], rpcHit_z[i]);
-    double minDR = 0.3;
+    const TVector3 pos_rpc(rpcHit_x[i], rpcHit_y[i], rpcHit_z[i]);
+    const TVector3 pos_gem(gemSegment_x[i], gemSegment_y[i], gemSegment_z[i]);
+    double minDR_rpc = 0.3;
     int match = -1;
     for ( unsigned j=0; j<2; ++j ) {
-      const double dR = p4s[j].Vect().DeltaR(pos);
-      if ( dR < minDR ) {
-        minDR = dR;
+      const double dR_rpc = p4s[j].Vect().DeltaR(pos_rpc);
+      if ( dR_rpc < minDR_rpc ) {
+        minDR_rpc = dR_rpc;
         match = j;
       }
     }
     if ( match >= 0 ) {
       for ( unsigned k=0; k<2; ++k ) { 
-        const double dEta = p4s[k].Eta()-pos.Eta();
-        const double dPhi = p4s[k].Vect().DeltaPhi(pos);
-     
-        if ( std::abs(dEta) < 0.2 && std::abs(dPhi) < 0.02 ) clusters.at(match).push_back(i);
+        const double dEta_rpc = p4s[k].Eta()-pos_rpc.Eta();
+        const double dPhi_rpc = p4s[k].Vect().DeltaPhi(pos_rpc);
+    //    if ( std::abs(dEta) < 0.2 && std::abs(dPhi) < 0.02 ) clusters.at(match).push_back(i);
       }
+    clusters.at(match).push_back(i);
+    }
+  }  
+*/
+  
+
+  TVector3 pos_rpc;
+  TVector3 pos_gem;
+  TVector3 pos_csc;
+  double minDR_rpc = 0.3;
+  std::vector< std::vector<unsigned> > dR_rpc, dEta_rpc, dPhi_rpc, dEta_gem, dPhi_gem, dEta_csc, dPhi_csc;
+  for ( auto iRPC=0; iRPC<rpcHit_n; ++iRPC ) {
+    pos_rpc.SetXYZ(rpcHit_x[iRPC], rpcHit_y[iRPC], rpcHit_z[iRPC]);
+    for ( auto jRPC=0; jRPC<2; ++jRPC ) {
+      dR_rpc.at(jRPC).push_back(std::abs(p4s[jRPC].Vect().DeltaR(pos_rpc)));
+      dEta_rpc.at(jRPC).push_back(std::abs(p4s[jRPC].Eta() - pos_rpc.Eta()));
+      dPhi_rpc.at(jRPC).push_back(std::abs(p4s[jRPC].Vect().DeltaPhi(pos_rpc)));
+      //if ( dR_rpc >= minDR_rpc ) continue;
+      //if ( dR_gem < minDR_gem && dR_rpc < minDR_rpc && std::abs(dEta) < 0.2 && std::abs(dPhi) < 0.02 ) clusters.at(j).push_back(iRPC);
     }
   }
-
+  for ( auto iGEM = 0; iGEM<gemSegment_n; ++iGEM ) {
+    pos_gem.SetXYZ(gemSegment_x[iGEM], gemSegment_y[iGEM], gemSegment_z[iGEM]);
+    for ( auto jGEM=0; jGEM<2; ++jGEM ) {
+      dEta_gem.at(jGEM).push_back(std::abs(p4s[jGEM].Eta() - pos_gem.Eta()));
+      dPhi_gem.at(jGEM).push_back(std::abs(p4s[jGEM].Vect().DeltaPhi(pos_gem)));
+      
+    }
+  }
+  for ( auto iCSC = 0; iCSC<cscSegment_n; ++iCSC ) {
+    pos_csc.SetXYZ(cscSegment_x[iCSC], cscSegment_y[iCSC], cscSegment_z[iCSC]);
+    for ( auto jCSC=0; jCSC<2; ++jCSC ) {
+      dEta_csc.at(jCSC).push_back(std::abs(p4s[jCSC].Eta() - pos_csc.Eta()));
+      dPhi_csc.at(jCSC).push_back(std::abs(p4s[jCSC].Vect().DeltaPhi(pos_csc)));
+    }
+  }
+  for ( auto event=0; event < rpcHit_n; ++event ) {
+    for ( auto j=0; j<2; ++j ) {
+      if ( dR_rpc[event][j] >= minDR_rpc ) continue;
+      //iRPC region cut
+      if ( p4s[j].Eta() >= 1.8 && p4s[j].Eta() < 2.4 && (dEta_rpc[event][j] > 0.03 || dPhi_rpc[event][j] > 0.008) ) continue;
+      //RPC and GEM
+      if ( dR_rpc[event][j] < minDR_rpc && dPhi_gem[event][j] <= 0.005 && dEta_gem[event][j] <= 0.06 ) clusters.at(j).push_back(event);
+      //RPC and CSC
+      else if ( dR_rpc[event][j] < minDR_rpc && dPhi_csc[event][j] <= 0.008 && dEta_csc[event][j] <= 0.06 ) clusters.at(j).push_back(event);
+    }
+  }
+  
   return clusters;
 }
 
@@ -239,6 +284,16 @@ void TreeAnalyzer::Loop(TFile* fout)
   tree->Branch("muon2_q", &out_muons_q[1], "muon2_q/I");
   tree->Branch("muon3_q", &out_muons_q[2], "muon3_q/I");
 
+  TVector3 out_rpc_p3[2];
+  TVector3 out_gem_p3[2];
+  TVector3 out_csc_p3[2];
+  tree->Branch("rpc1_clust_p3", "TVector3", &out_rpc_p3[0]);
+  tree->Branch("rpc2_clust_p3", "TVector3", &out_rpc_p3[1]);
+  tree->Branch("gem1_clust_p3", "TVector3", &out_gem_p3[0]);
+  tree->Branch("gem2_clust_p3", "TVector3", &out_gem_p3[1]);
+  tree->Branch("csc1_clust_p3", "TVector3", &out_csc_p3[0]);
+  tree->Branch("csc2_clust_p3", "TVector3", &out_csc_p3[1]);
+
   float out_fit_quals[2];
   float out_fit_betas[2];
   unsigned out_fit_nhits[2];
@@ -269,6 +324,77 @@ void TreeAnalyzer::Loop(TFile* fout)
   tree->Branch("hDeta_rpcHit_2", &hDeta_rpcHit_2, "TH1F");
   tree->Branch("hDphi_rpcHit_2", &hDphi_rpcHit_2, "TH1F");
 
+  TH1* hDeta_gemSeg_1 = new TH1F("hDeta_gemSeg_1", "positive HSCP deta(gen-gemSegment)", 100, -3.0, 3.0);
+  TH1* hDphi_gemSeg_1 = new TH1F("hDphi_gemSeg_1", "positive HSCP dphi(gen-gemSegment)", 100, -0.5, 0.5);
+  tree->Branch("hDeta_gemSeg_1", &hDeta_gemSeg_1, "TH1F");
+  tree->Branch("hDphi_gemSeg_1", &hDphi_gemSeg_1, "TH1F");
+
+  TH1* hDeta_gemSeg_2 = new TH1F("hDeta_gemSeg_2", "negative HSCP deta(gen-gemSegment)", 100, -3.0, 3.0);
+  TH1* hDphi_gemSeg_2 = new TH1F("hDphi_gemSeg_2", "negative HSCP dphi(gen-gemSegment)", 100, -0.5, 0.5);
+  tree->Branch("hDeta_gemSeg_2", &hDeta_gemSeg_2, "TH1F");
+  tree->Branch("hDphi_gemSeg_2", &hDphi_gemSeg_2, "TH1F");
+
+  TH1* hDeta_cscSeg_1 = new TH1F("hDeta_cscSeg_1", "positive HSCP deta(gen-cscSegment)", 100, -3.0, 3.0);
+  TH1* hDphi_cscSeg_1 = new TH1F("hDphi_cscSeg_1", "positive HSCP dphi(gen-cscSegment)", 100, -0.5, 0.5);
+  tree->Branch("hDeta_cscSeg_1", &hDeta_cscSeg_1, "TH1F");
+  tree->Branch("hDphi_cscSeg_1", &hDphi_cscSeg_1, "TH1F");
+
+  TH1* hDeta_cscSeg_2 = new TH1F("hDeta_cscSeg_2", "negative HSCP deta(gen-cscSegment)", 100, -3.0, 3.0);
+  TH1* hDphi_cscSeg_2 = new TH1F("hDphi_cscSeg_2", "negative HSCP dphi(gen-cscSegment)", 100, -0.5, 0.5);
+  tree->Branch("hDeta_cscSeg_2", &hDeta_cscSeg_2, "TH1F");
+  tree->Branch("hDphi_cscSeg_2", &hDphi_cscSeg_2, "TH1F");
+
+  //x-axis VS y-axis
+  TH2* hDetaVSDphi_rpcHit_1 = new TH2F("hDetaVSDphi_rpcHit_1","positive HSCP deta VS dphi (gen-rpcHit)", 100, -0.1, 0.1, 100, -0.1, 0.1);
+  TH2* hDetaVSDphi_rpcHit_2 = new TH2F("hDetaVSDphi_rpcHit_2","negative HSCP deta VS dphi (gen-rpcHit)", 100, -0.1, 0.1, 100, -0.1, 0.1);
+  tree->Branch("hDetaVSDphi_rpcHit_1", &hDetaVSDphi_rpcHit_1, "TH2F");
+  tree->Branch("hDetaVSDphi_rpcHit_2", &hDetaVSDphi_rpcHit_2, "TH2F");
+  hDetaVSDphi_rpcHit_1->SetOption("COLZ");
+  hDetaVSDphi_rpcHit_2->SetOption("COLZ");
+
+  TH2* hDetaVSDphi_rpcHit_iRPC_1 = new TH2F("hDetaVSDphi_rpcHit_iRPC_1","positive HSCP deta VS dphi (gen-rpcHit_iRPC)", 100, -0.1, 0.1, 100, -0.1, 0.1);
+  TH2* hDetaVSDphi_rpcHit_iRPC_2 = new TH2F("hDetaVSDphi_rpcHit_iRPC_2","negative HSCP deta VS dphi (gen-rpcHit_iRPC)", 100, -0.1, 0.1, 100, -0.1, 0.1);
+  tree->Branch("hDetaVSDphi_rpcHit_iRPC_1", &hDetaVSDphi_rpcHit_iRPC_1, "TH2F");
+  tree->Branch("hDetaVSDphi_rpcHit_iRPC_2", &hDetaVSDphi_rpcHit_iRPC_2, "TH2F");
+  hDetaVSDphi_rpcHit_iRPC_1->SetOption("COLZ");
+  hDetaVSDphi_rpcHit_iRPC_2->SetOption("COLZ");
+
+  TH2* hDetaVSDphi_gemSeg_1 = new TH2F("hDetaVSDphi_gemSeg_1","positive HSCP deta VS dphi (gen-gemSeg)", 100, -0.1, 0.1, 100, -0.1, 0.1);
+  TH2* hDetaVSDphi_gemSeg_2 = new TH2F("hDetaVSDphi_gemSeg_2","negative HSCP deta VS dphi (gen-gemSeg)", 100, -0.1, 0.1, 100, -0.1, 0.1);
+  tree->Branch("hDetaVSDphi_gemSeg_1", &hDetaVSDphi_gemSeg_1, "TH2F");
+  tree->Branch("hDetaVSDphi_gemSeg_2", &hDetaVSDphi_gemSeg_2, "TH2F");
+  hDetaVSDphi_gemSeg_1->SetOption("COLZ");
+  hDetaVSDphi_gemSeg_2->SetOption("COLZ");
+
+  TH2* hDetaVSDphi_cscSeg_1 = new TH2F("hDetaVSDphi_cscSeg_1","positive HSCP deta VS dphi (gen-cscSeg)", 100, -0.1, 0.1, 100, -0.1, 0.1);
+  TH2* hDetaVSDphi_cscSeg_2 = new TH2F("hDetaVSDphi_cscSeg_2","negative HSCP deta VS dphi (gen-cscSeg)", 100, -0.1, 0.1, 100, -0.1, 0.1);
+  tree->Branch("hDetaVSDphi_cscSeg_1", &hDetaVSDphi_cscSeg_1, "TH2F");
+  tree->Branch("hDetaVSDphi_cscSeg_2", &hDetaVSDphi_cscSeg_2, "TH2F");
+  hDetaVSDphi_cscSeg_1->SetOption("COLZ");
+  hDetaVSDphi_cscSeg_2->SetOption("COLZ");
+
+  //x-axis VS y-axis, bx=0
+  TH2* hDetaVSDphi_bx0_rpcHit_iRPC_1 = new TH2F("hDetaVSDphi_bx0_rpcHit_iRPC_1","positive HSCP deta VS dphi (gen-rpcHit_iRPC), bx0", 100, -0.1, 0.1, 100, -0.1, 0.1);
+  TH2* hDetaVSDphi_bx0_rpcHit_iRPC_2 = new TH2F("hDetaVSDphi_bx0_rpcHit_iRPC_2","negative HSCP deta VS dphi (gen-rpcHit_iRPC), bx0", 100, -0.1, 0.1, 100, -0.1, 0.1);
+  tree->Branch("hDetaVSDphi_bx0_rpcHit_iRPC_1", &hDetaVSDphi_bx0_rpcHit_iRPC_1, "TH2F");
+  tree->Branch("hDetaVSDphi_bx0_rpcHit_iRPC_2", &hDetaVSDphi_bx0_rpcHit_iRPC_2, "TH2F");
+  hDetaVSDphi_bx0_rpcHit_iRPC_1->SetOption("COLZ");
+  hDetaVSDphi_bx0_rpcHit_iRPC_2->SetOption("COLZ");
+
+  TH2* hDetaVSDphi_bx0_gemSeg_1 = new TH2F("hDetaVSDphi_bx0_gemSeg_1","positive HSCP deta VS dphi (gen-gemSeg), bx0", 100, -0.1, 0.1, 100, -0.1, 0.1);
+  TH2* hDetaVSDphi_bx0_gemSeg_2 = new TH2F("hDetaVSDphi_bx0_gemSeg_2","negative HSCP deta VS dphi (gen-gemSeg), bx0", 100, -0.1, 0.1, 100, -0.1, 0.1);
+  tree->Branch("hDetaVSDphi_bx0_gemSeg_1", &hDetaVSDphi_bx0_gemSeg_1, "TH2F");
+  tree->Branch("hDetaVSDphi_bx0_gemSeg_2", &hDetaVSDphi_bx0_gemSeg_2, "TH2F");
+  hDetaVSDphi_bx0_gemSeg_1->SetOption("COLZ");
+  hDetaVSDphi_bx0_gemSeg_2->SetOption("COLZ");
+
+  TH2* hDetaVSDphi_bx0_cscSeg_1 = new TH2F("hDetaVSDphi_bx0_cscSeg_1","positive HSCP deta VS dphi (gen-cscSeg), bx0", 100, -0.1, 0.1, 100, -0.1, 0.1);
+  TH2* hDetaVSDphi_bx0_cscSeg_2 = new TH2F("hDetaVSDphi_bx0_cscSeg_2","negative HSCP deta VS dphi (gen-cscSeg), bx0", 100, -0.1, 0.1, 100, -0.1, 0.1);
+  tree->Branch("hDetaVSDphi_bx0_cscSeg_1", &hDetaVSDphi_bx0_cscSeg_1, "TH2F");
+  tree->Branch("hDetaVSDphi_bx0_cscSeg_2", &hDetaVSDphi_bx0_cscSeg_2, "TH2F");
+  hDetaVSDphi_bx0_cscSeg_1->SetOption("COLZ");
+  hDetaVSDphi_bx0_cscSeg_2->SetOption("COLZ");
+
   float out_t0[2];
   tree->Branch("t0_1", &out_t0[0], "t0_1/F");
   tree->Branch("t0_2", &out_t0[1], "t0_2/F");
@@ -295,6 +421,11 @@ void TreeAnalyzer::Loop(TFile* fout)
       out_muons_q[i] = 0;
     }
     for ( unsigned i=0; i<2; ++i ) {
+      out_rpc_p3[i].SetXYZ(0,0,0);
+      out_gem_p3[i].SetXYZ(0,0,0);
+      out_csc_p3[i].SetXYZ(0,0,0);
+    }
+    for ( unsigned i=0; i<2; ++i ) {
       out_fit_quals[i] = 1e9;
       out_fit_betas[i] = 0;
       out_fit_nhits[i] = 0;
@@ -313,7 +444,6 @@ void TreeAnalyzer::Loop(TFile* fout)
       out_gens_p4[1].SetPtEtaPhiM(gen2_pt, gen2_eta, gen2_phi, gen2_m);
       out_gens_pdgId[1] = gen2_pdgId;
     }
-
     std::vector<unsigned> muonIdxs;
     for ( unsigned i=0; i<muon_n; ++i ) {
       if ( muon_pt[i] < 30 or std::abs(muon_eta[i]) > 2.4 ) continue;
@@ -338,22 +468,69 @@ void TreeAnalyzer::Loop(TFile* fout)
       else if ( fitAlgo == FitAlgo::FitSlope     ) res = fitTrackSlope(hitClusters[i]);
 
       for ( unsigned j : hitClusters[i] ) {
+        //Fill clustered hits
+        out_rpc_p3[i].SetXYZ(rpcHit_x[j], rpcHit_y[j], rpcHit_z[j]);
+        out_gem_p3[i].SetXYZ(gemSegment_x[j], gemSegment_y[j], gemSegment_z[j]);
+        out_csc_p3[i].SetXYZ(cscSegment_x[j], cscSegment_y[j], cscSegment_z[j]);
+        //For find cuts
 	const TVector3 pos_rpcHit(rpcHit_x[j], rpcHit_y[j], rpcHit_z[j]);
-
-        //if( i == 0 && std::abs(out_gens_p4[0].Eta()) > 1.8 && std::abs(out_gens_p4[0].Eta()) <= 2.4) {
+        const TVector3 pos_gem(gemSegment_x[j], gemSegment_y[j], gemSegment_z[j]);
+        const TVector3 pos_csc(cscSegment_x[j], cscSegment_y[j], cscSegment_z[j]);
+        const double ct_rpc = speedOfLight*rpcHit_time[j];
+        const double ibeta_rpc = 1./(1+ct_rpc/pos_rpcHit.Mag());
+        const double ct_gem = speedOfLight*gemSegment_time[j];
+        const double ibeta_gem = 1./(1+ct_gem/pos_gem.Mag());
+        const double ct_csc = speedOfLight*cscSegment_time[j];
+        const double ibeta_csc = 1./(1+ct_csc/pos_csc.Mag());
         if( i == 0 ) {
           hDeta_rpcHit_1->Fill(out_gens_p4[0].Eta()-pos_rpcHit.Eta());
-          hDphi_rpcHit_1->Fill(out_gens_p4[0].Phi()-pos_rpcHit.Phi()); 
+          hDphi_rpcHit_1->Fill(out_gens_p4[0].Phi()-pos_rpcHit.Phi());
+          hDetaVSDphi_rpcHit_1->Fill( out_gens_p4[0].Eta()-pos_rpcHit.Eta(), out_gens_p4[0].Phi()-pos_rpcHit.Phi() );
+          if( std::abs( out_gens_p4[0].Eta() ) > 1.8 and std::abs( out_gens_p4[0].Eta() ) < 2.5 ) {
+            hDetaVSDphi_rpcHit_iRPC_1->Fill( out_gens_p4[0].Eta()-pos_rpcHit.Eta(), out_gens_p4[0].Phi()-pos_rpcHit.Phi() );
+            if( ibeta_rpc >= -1 and ibeta_rpc <= 2 ) hDetaVSDphi_bx0_rpcHit_iRPC_1->Fill( out_gens_p4[0].Eta()-pos_rpcHit.Eta(), out_gens_p4[0].Phi()-pos_rpcHit.Phi() );
+          }
+
+          if( gemSegment_n > 0 ) {
+            if ( std::abs(out_gens_p4[0].Vect().DeltaPhi(pos_gem)) < 0.1 )hDeta_gemSeg_1->Fill(out_gens_p4[0].Eta()-pos_gem.Eta());
+            hDphi_gemSeg_1->Fill(out_gens_p4[0].Vect().DeltaPhi(pos_gem));
+            hDetaVSDphi_gemSeg_1->Fill( out_gens_p4[0].Eta()-pos_gem.Eta(), out_gens_p4[0].Vect().DeltaPhi(pos_gem) );
+            if( ibeta_gem >= -1 and ibeta_gem <= 2 ) hDetaVSDphi_bx0_gemSeg_1->Fill( out_gens_p4[0].Eta()-pos_gem.Eta(), out_gens_p4[0].Vect().DeltaPhi(pos_gem) );
+          }
+          if( cscSegment_n > 0 ) {
+            if ( std::abs(out_gens_p4[0].Vect().DeltaPhi(pos_csc)) < 0.1 )hDeta_cscSeg_1->Fill(out_gens_p4[0].Eta()-pos_csc.Eta());
+            hDphi_cscSeg_1->Fill(out_gens_p4[0].Vect().DeltaPhi(pos_csc));
+            hDetaVSDphi_cscSeg_1->Fill( out_gens_p4[0].Eta()-pos_csc.Eta(), out_gens_p4[0].Vect().DeltaPhi(pos_csc) );
+            if( ibeta_csc >= -1 and ibeta_csc <= 2 ) hDetaVSDphi_bx0_cscSeg_1->Fill( out_gens_p4[0].Eta()-pos_csc.Eta(), out_gens_p4[0].Vect().DeltaPhi(pos_csc) );
+          }
+          
         }
-        //else if ( i == 1 && std::abs(out_gens_p4[1].Eta()) > 1.8 && std::abs(out_gens_p4[1].Eta()) <= 2.4) {
         else if ( i == 1 ) {
           hDeta_rpcHit_2->Fill(out_gens_p4[1].Eta()-pos_rpcHit.Eta());
           hDphi_rpcHit_2->Fill(out_gens_p4[1].Phi()-pos_rpcHit.Phi());
+          hDetaVSDphi_rpcHit_2->Fill( out_gens_p4[1].Eta()-pos_rpcHit.Eta(), out_gens_p4[1].Phi()-pos_rpcHit.Phi() );
+          if( std::abs( out_gens_p4[1].Eta() ) > 1.8 and std::abs( out_gens_p4[1].Eta() ) < 2.5 ) {
+            hDetaVSDphi_rpcHit_iRPC_2->Fill( out_gens_p4[1].Eta()-pos_rpcHit.Eta(), out_gens_p4[1].Phi()-pos_rpcHit.Phi() );
+            if( ibeta_rpc >= -1 and ibeta_rpc <= 2 ) hDetaVSDphi_bx0_rpcHit_iRPC_2->Fill( out_gens_p4[1].Eta()-pos_rpcHit.Eta(), out_gens_p4[1].Phi()-pos_rpcHit.Phi() );
+          }
+
+          if( gemSegment_n > 0 ) {
+            if ( std::abs(out_gens_p4[1].Vect().DeltaPhi(pos_gem)) < 0.1 )hDeta_gemSeg_2->Fill(out_gens_p4[1].Eta()-pos_gem.Eta());
+            hDphi_gemSeg_2->Fill(out_gens_p4[1].Vect().DeltaPhi(pos_gem));
+            hDetaVSDphi_gemSeg_2->Fill( out_gens_p4[1].Eta()-pos_gem.Eta(), out_gens_p4[1].Vect().DeltaPhi(pos_gem) );
+            if( ibeta_gem >= -1 and ibeta_gem <= 2 ) hDetaVSDphi_bx0_gemSeg_2->Fill( out_gens_p4[1].Eta()-pos_gem.Eta(), out_gens_p4[1].Vect().DeltaPhi(pos_gem) );
+          }
+          if( cscSegment_n > 0 ) {
+            if ( std::abs(out_gens_p4[1].Vect().DeltaPhi(pos_csc)) < 0.1 )hDeta_cscSeg_2->Fill(out_gens_p4[1].Eta()-pos_csc.Eta());
+            hDphi_cscSeg_2->Fill(out_gens_p4[1].Vect().DeltaPhi(pos_csc));
+            hDetaVSDphi_cscSeg_2->Fill( out_gens_p4[1].Eta()-pos_csc.Eta(), out_gens_p4[1].Vect().DeltaPhi(pos_csc) );
+            if( ibeta_csc >= -1 and ibeta_csc <= 2 ) hDetaVSDphi_bx0_cscSeg_2->Fill( out_gens_p4[1].Eta()-pos_csc.Eta(), out_gens_p4[1].Vect().DeltaPhi(pos_csc) );
+          }
         }
       }
 
-      //out_fit_quals[i] = res[0]; //bxErr2, using at BxConstrained algo
-      out_fit_quals[i] = res[2]; //betaErr, using at FitSlope algo 
+      if ( fitAlgo == FitAlgo::BxContrained ) out_fit_quals[i] = res[0]; //bxErr2, using at BxConstrained algo
+      else if ( fitAlgo == FitAlgo::FitSlope ) out_fit_quals[i] = res[2]; //betaErr, using at FitSlope algo 
       out_fit_betas[i] = res[1];
       out_fit_nhits[i] = hitClusters[i].size();
       //out_t0[i] = res[3];
@@ -368,6 +545,7 @@ void TreeAnalyzer::Loop(TFile* fout)
 
       hDeta_2->Fill(out_gens_p4[1].Eta()-pos2.Eta());
       hDphi_2->Fill(out_gens_p4[1].Phi()-pos2.Phi());
+
     }
         
     if ( out_fit_quals[0] < 1e9 and out_fit_quals[1] < 1e9) ++twoHSCP;
