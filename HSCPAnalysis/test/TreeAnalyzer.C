@@ -111,34 +111,34 @@ std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLore
 */
   
 
-  TVector3 pos_rpc;
-  TVector3 pos_gem;
-  TVector3 pos_csc;
+  TVector3 pos_rpc[rpcHit_n];
+  TVector3 pos_gem[gemSegment_n];
+  TVector3 pos_csc[cscSegment_n];
   double minDR_rpc = 0.3;
   std::vector< std::vector<unsigned> > dR_rpc, dEta_rpc, dPhi_rpc, dEta_gem, dPhi_gem, dEta_csc, dPhi_csc;
   for ( auto iRPC=0; iRPC<rpcHit_n; ++iRPC ) {
-    pos_rpc.SetXYZ(rpcHit_x[iRPC], rpcHit_y[iRPC], rpcHit_z[iRPC]);
+    pos_rpc[iRPC].SetXYZ(rpcHit_x[iRPC], rpcHit_y[iRPC], rpcHit_z[iRPC]);
     for ( auto jRPC=0; jRPC<2; ++jRPC ) {
-      dR_rpc.at(jRPC).push_back(std::abs(p4s[jRPC].Vect().DeltaR(pos_rpc)));
-      dEta_rpc.at(jRPC).push_back(std::abs(p4s[jRPC].Eta() - pos_rpc.Eta()));
-      dPhi_rpc.at(jRPC).push_back(std::abs(p4s[jRPC].Vect().DeltaPhi(pos_rpc)));
+      dR_rpc.at(jRPC).push_back(std::abs(p4s[jRPC].Vect().DeltaR(pos_rpc[iRPC])));
+      dEta_rpc.at(jRPC).push_back(std::abs(p4s[jRPC].Eta() - pos_rpc[iRPC].Eta()));
+      dPhi_rpc.at(jRPC).push_back(std::abs(p4s[jRPC].Vect().DeltaPhi(pos_rpc[iRPC])));
       //if ( dR_rpc >= minDR_rpc ) continue;
       //if ( dR_gem < minDR_gem && dR_rpc < minDR_rpc && std::abs(dEta) < 0.2 && std::abs(dPhi) < 0.02 ) clusters.at(j).push_back(iRPC);
     }
   }
   for ( auto iGEM = 0; iGEM<gemSegment_n; ++iGEM ) {
-    pos_gem.SetXYZ(gemSegment_x[iGEM], gemSegment_y[iGEM], gemSegment_z[iGEM]);
+    pos_gem[iGEM].SetXYZ(gemSegment_x[iGEM], gemSegment_y[iGEM], gemSegment_z[iGEM]);
     for ( auto jGEM=0; jGEM<2; ++jGEM ) {
-      dEta_gem.at(jGEM).push_back(std::abs(p4s[jGEM].Eta() - pos_gem.Eta()));
-      dPhi_gem.at(jGEM).push_back(std::abs(p4s[jGEM].Vect().DeltaPhi(pos_gem)));
+      dEta_gem.at(jGEM).push_back(std::abs(p4s[jGEM].Eta() - pos_gem[iGEM].Eta()));
+      dPhi_gem.at(jGEM).push_back(std::abs(p4s[jGEM].Vect().DeltaPhi(pos_gem[iGEM])));
       
     }
   }
   for ( auto iCSC = 0; iCSC<cscSegment_n; ++iCSC ) {
-    pos_csc.SetXYZ(cscSegment_x[iCSC], cscSegment_y[iCSC], cscSegment_z[iCSC]);
+    pos_csc[iCSC].SetXYZ(cscSegment_x[iCSC], cscSegment_y[iCSC], cscSegment_z[iCSC]);
     for ( auto jCSC=0; jCSC<2; ++jCSC ) {
-      dEta_csc.at(jCSC).push_back(std::abs(p4s[jCSC].Eta() - pos_csc.Eta()));
-      dPhi_csc.at(jCSC).push_back(std::abs(p4s[jCSC].Vect().DeltaPhi(pos_csc)));
+      dEta_csc.at(jCSC).push_back(std::abs(p4s[jCSC].Eta() - pos_csc[iCSC].Eta()));
+      dPhi_csc.at(jCSC).push_back(std::abs(p4s[jCSC].Vect().DeltaPhi(pos_csc[iCSC])));
     }
   }
   for ( auto event=0; event < rpcHit_n; ++event ) {
