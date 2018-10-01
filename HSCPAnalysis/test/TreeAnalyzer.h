@@ -76,6 +76,26 @@ class TreeAnalyzer {
     Double_t        simDigi2_x[1000];   //[simDigi2_n]
     Double_t        simDigi2_y[1000];   //[simDigi2_n]
     Double_t        simDigi2_z[1000];   //[simDigi2_n]
+    UShort_t        gemSegment_n;
+    Double_t        gemSegment_x[1000];   //[gemSegment_n]
+    Double_t        gemSegment_y[1000];   //[gemSegment_n]
+    Double_t        gemSegment_z[1000];   //[gemSegment_n]
+    Double_t        gemSegment_dx[1000];   //[gemSegment_n]
+    Double_t        gemSegment_dy[1000];   //[gemSegment_n]
+    Double_t        gemSegment_dz[1000];   //[gemSegment_n]
+    Double_t        gemSegment_time[1000];   //[gemSegment_n]
+    Double_t        gemSegment_lx[1000];   //[gemSegment_n]
+    Double_t        gemSegment_ly[1000];   //[gemSegment_n]
+    UShort_t        cscSegment_n;
+    Double_t        cscSegment_x[1000];   //[cscSegment_n]
+    Double_t        cscSegment_y[1000];   //[cscSegment_n]
+    Double_t        cscSegment_z[1000];   //[cscSegment_n]
+    Double_t        cscSegment_dx[1000];   //[cscSegment_n]
+    Double_t        cscSegment_dy[1000];   //[cscSegment_n]
+    Double_t        cscSegment_dz[1000];   //[cscSegment_n]
+    Double_t        cscSegment_time[1000];   //[cscSegment_n]
+    Double_t        cscSegment_lx[1000];   //[cscSegment_n]
+    Double_t        cscSegment_ly[1000];   //[cscSegment_n]
 
     // List of branches
     TBranch        *b_gen1_pdgId;   //!
@@ -131,6 +151,26 @@ class TreeAnalyzer {
     TBranch        *b_simDigi2_x;
     TBranch        *b_simDigi2_y;
     TBranch        *b_simDigi2_z;
+    TBranch        *b_gemSegment_n;
+    TBranch        *b_gemSegment_x;
+    TBranch        *b_gemSegment_y;
+    TBranch        *b_gemSegment_z;
+    TBranch        *b_gemSegment_dx;
+    TBranch        *b_gemSegment_dy;
+    TBranch        *b_gemSegment_dz;
+    TBranch        *b_gemSegment_time;
+    TBranch        *b_gemSegment_lx;
+    TBranch        *b_gemSegment_ly;
+    TBranch        *b_cscSegment_n;
+    TBranch        *b_cscSegment_x;
+    TBranch        *b_cscSegment_y;
+    TBranch        *b_cscSegment_z;
+    TBranch        *b_cscSegment_dx;
+    TBranch        *b_cscSegment_dy;
+    TBranch        *b_cscSegment_dz;
+    TBranch        *b_cscSegment_time;
+    TBranch        *b_cscSegment_lx;
+    TBranch        *b_cscSegment_ly;
 
     TreeAnalyzer(TTree *tree=0);
     virtual ~TreeAnalyzer();
@@ -261,6 +301,26 @@ void TreeAnalyzer::Init(TTree *tree)
   fChain->SetBranchAddress("simDigi2_x", simDigi2_x, &b_simDigi2_x);
   fChain->SetBranchAddress("simDigi2_y", simDigi2_y, &b_simDigi2_y);
   fChain->SetBranchAddress("simDigi2_z", simDigi2_z, &b_simDigi2_z);
+  fChain->SetBranchAddress("gemSegment_n", &gemSegment_n, &b_gemSegment_n);
+  fChain->SetBranchAddress("gemSegment_x", gemSegment_x, &b_gemSegment_x);
+  fChain->SetBranchAddress("gemSegment_y", gemSegment_y, &b_gemSegment_y);
+  fChain->SetBranchAddress("gemSegment_z", gemSegment_z, &b_gemSegment_z);
+  fChain->SetBranchAddress("gemSegment_dx", gemSegment_dx, &b_gemSegment_dx);
+  fChain->SetBranchAddress("gemSegment_dy", gemSegment_dy, &b_gemSegment_dy);
+  fChain->SetBranchAddress("gemSegment_dz", gemSegment_dz, &b_gemSegment_dz);
+  fChain->SetBranchAddress("gemSegment_time", gemSegment_time, &b_gemSegment_time);
+  fChain->SetBranchAddress("gemSegment_lx", gemSegment_lx, &b_gemSegment_lx);
+  fChain->SetBranchAddress("gemSegment_ly", gemSegment_ly, &b_gemSegment_ly);
+  fChain->SetBranchAddress("cscSegment_n", &cscSegment_n, &b_cscSegment_n);
+  fChain->SetBranchAddress("cscSegment_x", cscSegment_x, &b_cscSegment_x);
+  fChain->SetBranchAddress("cscSegment_y", cscSegment_y, &b_cscSegment_y);
+  fChain->SetBranchAddress("cscSegment_z", cscSegment_z, &b_cscSegment_z);
+  fChain->SetBranchAddress("cscSegment_dx", cscSegment_dx, &b_cscSegment_dx);
+  fChain->SetBranchAddress("cscSegment_dy", cscSegment_dy, &b_cscSegment_dy);
+  fChain->SetBranchAddress("cscSegment_dz", cscSegment_dz, &b_cscSegment_dz);
+  fChain->SetBranchAddress("cscSegment_time", cscSegment_time, &b_cscSegment_time);
+  fChain->SetBranchAddress("cscSegment_lx", cscSegment_lx, &b_cscSegment_lx);
+  fChain->SetBranchAddress("cscSegment_ly", cscSegment_ly, &b_cscSegment_ly);
   Notify();
 }
 
