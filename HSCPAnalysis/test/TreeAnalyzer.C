@@ -15,9 +15,8 @@ const double speedOfLight = 29.979; // 30cm/ns
 const int bxLo = -8, nBx = 17;
 
 const unsigned minNhitCluster = 2;
-enum class ClusterAlgo { GenMatch, Histogram };
+enum class ClusterAlgo { GenMatch };
 enum class FitAlgo { BxContrained, FitSlope };
-//ClusterAlgo clusterAlgo = ClusterAlgo::Histogram;
 ClusterAlgo clusterAlgo = ClusterAlgo::GenMatch;
 //FitAlgo fitAlgo = FitAlgo::FitSlope;
 FitAlgo fitAlgo = FitAlgo::BxContrained;
@@ -31,56 +30,6 @@ double deltaPhi(const double phi1, const double phi2)
   return dphi;
 }
 
-struct HEtaPhiBeta
-{
-  constexpr static int nbinsEta = 25, nbinsPhi = 50, nbinsBeta = 15;
-  constexpr static double minEta = -2.5, maxEta = 2.5;
-  constexpr static double minPhi = 0, maxPhi = 2*3.14159265358979323846L+1e-9;
-  constexpr static double minBeta = -1, maxBeta = 2;
-  constexpr static double binwEta  = (maxEta-minEta)/nbinsEta;
-  constexpr static double binwPhi  = (maxPhi-minPhi)/nbinsPhi;
-  constexpr static double binwBeta = (maxBeta-minBeta)/nbinsBeta;
-
-  unsigned findBin(const double eta, const double phi, const double beta) const
-  {
-    const int ieta  = std::max(-1, std::min(nbinsEta, int(floor((eta-minEta)/binwEta))));
-    const int iphi  = std::max(-1, std::min(nbinsPhi, int(floor((phi-minPhi)/binwPhi))));
-    const int ibeta = std::max(-1, std::min(nbinsBeta, int(floor((beta-minBeta)/binwBeta))));
-
-    const unsigned ibin = (ieta+1)
-                        + (iphi+1)*(nbinsEta+2);
-                        //+ (ibeta+1)*(nbinsEta+2)*(nbinsPhi+2);
-    return ibin;
-  }
-
-  std::vector<double> findBinLowEdge(unsigned ibin) const
-  {
-    const int ieta = ibin % (nbinsEta+2) - 1;
-    ibin /= nbinsEta+2;
-    const int iphi = ibin % (nbinsPhi+2) - 1;
-    //ibin /= nbinsPhi+2;
-    //const int ibeta = ibin - 1;
-
-    const double eta  = ieta*binwEta+minEta;
-    const double phi  = iphi*binwPhi+minPhi;
-    //const double beta = ibeta*binwBeta+minBeta;
-
-    std::vector<double> res = {eta, phi};//, beta};
-    return res;
-  }
-
-
-  void fill(const double eta, const double phi, const double beta, const unsigned idx)
-  {
-    const unsigned ibin = findBin(eta, phi, beta);
-    auto itr = contents.find(ibin);
-    if ( itr == contents.end() ) itr = contents.insert(std::make_pair(ibin, std::vector<unsigned>())).first;
-    itr->second.push_back(idx);
-  }
-
-  std::map<unsigned, std::vector<unsigned>> contents;
-};
-
 std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLorentzVector p4s[]) const
 {
   // Cluster hits along the GenParticle's four momentum, just for initial testing.
@@ -89,9 +38,8 @@ std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLore
 /*  
   for ( unsigned i=0; i<rpcHit_n; ++i ) {
     const TVector3 pos_rpc(rpcHit_x[i], rpcHit_y[i], rpcHit_z[i]);
-    const TVector3 pos_gem(gemSegment_x[i], gemSegment_y[i], gemSegment_z[i]);
-    double minDR_rpc = 0.3;
     int match = -1;
+    double minDR_rpc = 0.3;
     for ( unsigned j=0; j<2; ++j ) {
       const double dR_rpc = p4s[j].Vect().DeltaR(pos_rpc);
       if ( dR_rpc < minDR_rpc ) {
@@ -111,71 +59,55 @@ std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLore
 */
   
 
-  TVector3 pos_rpc[rpcHit_n];
-  TVector3 pos_gem[gemSegment_n];
-  TVector3 pos_csc[cscSegment_n];
-  double minDR_rpc = 0.3;
   std::vector< std::vector<unsigned> > dR_rpc, dEta_rpc, dPhi_rpc, dEta_gem, dPhi_gem, dEta_csc, dPhi_csc;
+  dR_rpc.resize(2); dEta_rpc.resize(2); dPhi_rpc.resize(2); dEta_gem.resize(2); dPhi_gem.resize(2); dEta_csc.resize(2); dPhi_csc.resize(2);
+  int match_rpc = -1;
   for ( auto iRPC=0; iRPC<rpcHit_n; ++iRPC ) {
-    pos_rpc[iRPC].SetXYZ(rpcHit_x[iRPC], rpcHit_y[iRPC], rpcHit_z[iRPC]);
+    double minDR_rpc = 0.3;
+    const TVector3 pos_rpc(rpcHit_x[iRPC], rpcHit_y[iRPC], rpcHit_z[iRPC]);
     for ( auto jRPC=0; jRPC<2; ++jRPC ) {
-      dR_rpc.at(jRPC).push_back(std::abs(p4s[jRPC].Vect().DeltaR(pos_rpc[iRPC])));
-      dEta_rpc.at(jRPC).push_back(std::abs(p4s[jRPC].Eta() - pos_rpc[iRPC].Eta()));
-      dPhi_rpc.at(jRPC).push_back(std::abs(p4s[jRPC].Vect().DeltaPhi(pos_rpc[iRPC])));
-      //if ( dR_rpc >= minDR_rpc ) continue;
-      //if ( dR_gem < minDR_gem && dR_rpc < minDR_rpc && std::abs(dEta) < 0.2 && std::abs(dPhi) < 0.02 ) clusters.at(j).push_back(iRPC);
+      dR_rpc.at(jRPC).push_back(std::abs(p4s[jRPC].Vect().DeltaR(pos_rpc)));
+      if ( dR_rpc[jRPC][iRPC] >= minDR_rpc ) continue;
+      if ( dR_rpc[jRPC][iRPC] < minDR_rpc ) {
+        minDR_rpc = dR_rpc[jRPC][iRPC];
+        match_rpc = jRPC;
+      }
+    }
+    if ( match_rpc >= 0 ) {
+      for ( auto kRPC=0; kRPC<2; ++kRPC ) {
+        dEta_rpc.at(kRPC).push_back(std::abs(p4s[kRPC].Eta() - pos_rpc.Eta()));
+        dPhi_rpc.at(kRPC).push_back(std::abs(deltaPhi(p4s[kRPC].Phi(), pos_rpc.Phi())));
+      }
     }
   }
   for ( auto iGEM = 0; iGEM<gemSegment_n; ++iGEM ) {
-    pos_gem[iGEM].SetXYZ(gemSegment_x[iGEM], gemSegment_y[iGEM], gemSegment_z[iGEM]);
+    const TVector3 pos_gem(gemSegment_x[iGEM], gemSegment_y[iGEM], gemSegment_z[iGEM]);
     for ( auto jGEM=0; jGEM<2; ++jGEM ) {
-      dEta_gem.at(jGEM).push_back(std::abs(p4s[jGEM].Eta() - pos_gem[iGEM].Eta()));
-      dPhi_gem.at(jGEM).push_back(std::abs(p4s[jGEM].Vect().DeltaPhi(pos_gem[iGEM])));
-      
+      dEta_gem.at(jGEM).push_back(std::abs(p4s[jGEM].Eta() - pos_gem.Eta()));
+      dPhi_gem.at(jGEM).push_back(std::abs(deltaPhi(p4s[jGEM].Phi(), pos_gem.Phi())));
     }
   }
   for ( auto iCSC = 0; iCSC<cscSegment_n; ++iCSC ) {
-    pos_csc[iCSC].SetXYZ(cscSegment_x[iCSC], cscSegment_y[iCSC], cscSegment_z[iCSC]);
+    const TVector3 pos_csc(cscSegment_x[iCSC], cscSegment_y[iCSC], cscSegment_z[iCSC]);
     for ( auto jCSC=0; jCSC<2; ++jCSC ) {
-      dEta_csc.at(jCSC).push_back(std::abs(p4s[jCSC].Eta() - pos_csc[iCSC].Eta()));
-      dPhi_csc.at(jCSC).push_back(std::abs(p4s[jCSC].Vect().DeltaPhi(pos_csc[iCSC])));
+      dEta_csc.at(jCSC).push_back(std::abs(p4s[jCSC].Eta() - pos_csc.Eta()));
+      dPhi_csc.at(jCSC).push_back(std::abs(deltaPhi(p4s[jCSC].Phi(), pos_csc.Phi())));
     }
   }
   for ( auto event=0; event < rpcHit_n; ++event ) {
+    double minDR_rpc = 0.3;
     for ( auto j=0; j<2; ++j ) {
-      if ( dR_rpc[event][j] >= minDR_rpc ) continue;
+      if ( dR_rpc[j][event] >= minDR_rpc ) continue;
       //iRPC region cut
-      if ( p4s[j].Eta() >= 1.8 && p4s[j].Eta() < 2.4 && (dEta_rpc[event][j] > 0.03 || dPhi_rpc[event][j] > 0.008) ) continue;
+      if ( std::abs(p4s[j].Eta()) >= 1.8 && std::abs(p4s[j].Eta()) < 2.4 && (dEta_rpc[j][event] > 0.03 || dPhi_rpc[j][event] > 0.008) ) continue;
       //RPC and GEM
-      if ( dR_rpc[event][j] < minDR_rpc && dPhi_gem[event][j] <= 0.005 && dEta_gem[event][j] <= 0.06 ) clusters.at(j).push_back(event);
+      if ( dR_rpc[j][event] < minDR_rpc && dPhi_gem[j][event] <= 0.005 && dEta_gem[j][event] <= 0.06 ) clusters.at(j).push_back(event);
       //RPC and CSC
-      else if ( dR_rpc[event][j] < minDR_rpc && dPhi_csc[event][j] <= 0.008 && dEta_csc[event][j] <= 0.06 ) clusters.at(j).push_back(event);
+      else if ( dR_rpc[j][event] < minDR_rpc && dPhi_csc[j][event] <= 0.008 && dEta_csc[j][event] <= 0.06 ) clusters.at(j).push_back(event);
     }
   }
   
-  return clusters;
-}
-
-std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByEtaPhi() const
-{
-  // Hit clustering in 3D, eta-phi-beta space with vx=vy=vz=0 & bx=0 hypothesis
-  std::vector<std::vector<unsigned>> clusters;
-  // First step to fill "histograms"
-  HEtaPhiBeta h;
-  for ( unsigned i=0; i<rpcHit_n; ++i ) {
-    const TVector3 pos(rpcHit_x[i], rpcHit_y[i], rpcHit_z[i]);
-    const double eta = pos.Eta(), phi = pos.Phi();
-    const double ct = speedOfLight*rpcHit_time[i];
-    const double beta = 1./(1+ct/pos.Mag());
-
-    h.fill(eta, phi, beta, i);
-  }
-
-  for ( auto item : h.contents ) {
-    if ( item.second.size() < minNhitCluster ) continue;
-    clusters.push_back(item.second);
-  }
-
+  
   return clusters;
 }
 
@@ -459,7 +391,6 @@ void TreeAnalyzer::Loop(TFile* fout)
     // Cluster hits and do the fitting
     std::vector<std::vector<unsigned>> hitClusters;
     if      ( clusterAlgo == ClusterAlgo::GenMatch  ) hitClusters = clusterHitsByGenP4s(out_gens_p4);
-    else if ( clusterAlgo == ClusterAlgo::Histogram ) hitClusters = clusterHitsByEtaPhi();
     //std::sort(hitClusters.begin(), hitClusters.end(),
               //[](const std::vector<unsigned>& a, const std::vector<unsigned>& b){return a.size() > b.size();});
     for ( unsigned i=0, n=std::min(2ul, hitClusters.size()); i<n; ++i ) {
