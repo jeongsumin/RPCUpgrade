@@ -34,8 +34,54 @@ std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLore
 {
   // Cluster hits along the GenParticle's four momentum, just for initial testing.
   std::vector< std::vector<unsigned> > clusters;
-  clusters.resize(2);
-/*  
+  std::vector< std::vector<unsigned> > clusters_gem;
+  std::vector< std::vector<unsigned> > clusters_csc;
+  clusters.resize(2); clusters_gem.resize(2); clusters_csc.resize(2);
+  int match_count_gem = 0;
+  int match_count_csc = 0;
+
+  for ( auto iGEM = 0; iGEM<gemSegment_n; ++iGEM ) {
+    const TVector3 pos_gem(gemSegment_x[iGEM], gemSegment_y[iGEM], gemSegment_z[iGEM]);
+    int match_gem = -1;
+    double minDR_gem = 0.3;
+    for ( unsigned jGEM=0; jGEM<2; ++jGEM ) {
+      const double dR_gem = p4s[jGEM].Vect().DeltaR(pos_gem);
+      if ( dR_gem < minDR_gem ) {
+        minDR_gem = dR_gem;
+        match_gem = jGEM;
+        ++match_count_gem;
+      }
+    }
+    if ( match_gem >= 0 ) {
+      for ( auto kGEM=0; kGEM<2; ++kGEM ) {
+        const double dEta_gem = p4s[kGEM].Eta()-pos_gem.Eta();
+        const double dPhi_gem = p4s[kGEM].Vect().DeltaPhi(pos_gem);
+        if ( std::abs(dPhi_gem) <= 0.005 && std::abs(dEta_gem) <= 0.06 ) clusters_gem.at(match_gem).push_back(iGEM);
+      }
+    }
+  }
+
+  for ( auto iCSC = 0; iCSC<cscSegment_n; ++iCSC ) {
+    const TVector3 pos_csc(cscSegment_x[iCSC], cscSegment_y[iCSC], cscSegment_z[iCSC]);
+    int match_csc = -1;
+    double minDR_csc = 0.3;
+    for ( unsigned jCSC=0; jCSC<2; ++jCSC ) {
+      const double dR_csc = p4s[jCSC].Vect().DeltaR(pos_csc);
+      if ( dR_csc < minDR_csc ) {
+        minDR_csc = dR_csc;
+        match_csc = jCSC;
+        ++match_count_csc;
+      }
+    }
+    if ( match_csc >= 0 ) {
+      for ( auto kCSC=0; kCSC<2; ++kCSC ) {
+        const double dEta_csc = p4s[kCSC].Eta()-pos_csc.Eta();
+        const double dPhi_csc = p4s[kCSC].Vect().DeltaPhi(pos_csc);
+        if ( std::abs(dPhi_csc) <= 0.008 && std::abs(dEta_csc) <= 0.06 ) clusters_csc.at(match_csc).push_back(iCSC);
+      }
+    }
+  }
+  
   for ( unsigned i=0; i<rpcHit_n; ++i ) {
     const TVector3 pos_rpc(rpcHit_x[i], rpcHit_y[i], rpcHit_z[i]);
     int match = -1;
@@ -51,63 +97,17 @@ std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLore
       for ( unsigned k=0; k<2; ++k ) { 
         const double dEta_rpc = p4s[k].Eta()-pos_rpc.Eta();
         const double dPhi_rpc = p4s[k].Vect().DeltaPhi(pos_rpc);
-    //    if ( std::abs(dEta) < 0.2 && std::abs(dPhi) < 0.02 ) clusters.at(match).push_back(i);
+        //iRPC region cut
+        if ( std::abs(p4s[k].Eta()) >= 1.8 && std::abs(p4s[k].Eta()) < 2.4 && ( std::abs(dEta_rpc) > 0.03 || std::abs(dPhi_rpc) > 0.008 ) ) continue;
+        //Cluster the rest of RPC hits with CSC and GEM
+        if ( std::abs(dEta_rpc) < 0.2 && std::abs(dPhi_rpc) < 0.02 && ( match_count_csc > 0 || match_count_gem > 0 ) ) clusters.at(match).push_back(i);
       }
-    clusters.at(match).push_back(i);
+    //clusters.at(match).push_back(i);
     }
-  }  
-*/
-  
+  }   
 
-  std::vector< std::vector<unsigned> > dR_rpc, dEta_rpc, dPhi_rpc, dEta_gem, dPhi_gem, dEta_csc, dPhi_csc;
-  dR_rpc.resize(2); dEta_rpc.resize(2); dPhi_rpc.resize(2); dEta_gem.resize(2); dPhi_gem.resize(2); dEta_csc.resize(2); dPhi_csc.resize(2);
-  int match_rpc = -1;
-  for ( auto iRPC=0; iRPC<rpcHit_n; ++iRPC ) {
-    double minDR_rpc = 0.3;
-    const TVector3 pos_rpc(rpcHit_x[iRPC], rpcHit_y[iRPC], rpcHit_z[iRPC]);
-    for ( auto jRPC=0; jRPC<2; ++jRPC ) {
-      dR_rpc.at(jRPC).push_back(std::abs(p4s[jRPC].Vect().DeltaR(pos_rpc)));
-      if ( dR_rpc[jRPC][iRPC] >= minDR_rpc ) continue;
-      if ( dR_rpc[jRPC][iRPC] < minDR_rpc ) {
-        minDR_rpc = dR_rpc[jRPC][iRPC];
-        match_rpc = jRPC;
-      }
-    }
-    if ( match_rpc >= 0 ) {
-      for ( auto kRPC=0; kRPC<2; ++kRPC ) {
-        dEta_rpc.at(kRPC).push_back(std::abs(p4s[kRPC].Eta() - pos_rpc.Eta()));
-        dPhi_rpc.at(kRPC).push_back(std::abs(deltaPhi(p4s[kRPC].Phi(), pos_rpc.Phi())));
-      }
-    }
-  }
-  for ( auto iGEM = 0; iGEM<gemSegment_n; ++iGEM ) {
-    const TVector3 pos_gem(gemSegment_x[iGEM], gemSegment_y[iGEM], gemSegment_z[iGEM]);
-    for ( auto jGEM=0; jGEM<2; ++jGEM ) {
-      dEta_gem.at(jGEM).push_back(std::abs(p4s[jGEM].Eta() - pos_gem.Eta()));
-      dPhi_gem.at(jGEM).push_back(std::abs(deltaPhi(p4s[jGEM].Phi(), pos_gem.Phi())));
-    }
-  }
-  for ( auto iCSC = 0; iCSC<cscSegment_n; ++iCSC ) {
-    const TVector3 pos_csc(cscSegment_x[iCSC], cscSegment_y[iCSC], cscSegment_z[iCSC]);
-    for ( auto jCSC=0; jCSC<2; ++jCSC ) {
-      dEta_csc.at(jCSC).push_back(std::abs(p4s[jCSC].Eta() - pos_csc.Eta()));
-      dPhi_csc.at(jCSC).push_back(std::abs(deltaPhi(p4s[jCSC].Phi(), pos_csc.Phi())));
-    }
-  }
-  for ( auto event=0; event < rpcHit_n; ++event ) {
-    double minDR_rpc = 0.3;
-    for ( auto j=0; j<2; ++j ) {
-      if ( dR_rpc[j][event] >= minDR_rpc ) continue;
-      //iRPC region cut
-      if ( std::abs(p4s[j].Eta()) >= 1.8 && std::abs(p4s[j].Eta()) < 2.4 && (dEta_rpc[j][event] > 0.03 || dPhi_rpc[j][event] > 0.008) ) continue;
-      //RPC and GEM
-      if ( dR_rpc[j][event] < minDR_rpc && dPhi_gem[j][event] <= 0.005 && dEta_gem[j][event] <= 0.06 ) clusters.at(j).push_back(event);
-      //RPC and CSC
-      else if ( dR_rpc[j][event] < minDR_rpc && dPhi_csc[j][event] <= 0.008 && dEta_csc[j][event] <= 0.06 ) clusters.at(j).push_back(event);
-    }
-  }
-  
-  
+  //std::vector< std::vector<unsigned> > dR_rpc, dEta_rpc, dPhi_rpc, dEta_gem, dPhi_gem, dEta_csc, dPhi_csc;
+  //dR_rpc.resize(2); dEta_rpc.resize(2); dPhi_rpc.resize(2); dEta_gem.resize(2); dPhi_gem.resize(2); dEta_csc.resize(2); dPhi_csc.resize(2);
   return clusters;
 }
 
