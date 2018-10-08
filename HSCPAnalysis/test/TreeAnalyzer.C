@@ -30,7 +30,7 @@ double deltaPhi(const double phi1, const double phi2)
   return dphi;
 }
 
-std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLorentzVector p4s[]) const
+std::vector< std::vector<unsigned> > TreeAnalyzer::clusterHitsByGenP4s(const TLorentzVector p4s[]) const
 {
   // Cluster hits along the GenParticle's four momentum, just for initial testing.
   std::vector< std::vector<unsigned> > clusters;
@@ -100,7 +100,7 @@ std::vector<std::vector<unsigned>> TreeAnalyzer::clusterHitsByGenP4s(const TLore
         //iRPC region cut
         if ( std::abs(p4s[k].Eta()) >= 1.8 && std::abs(p4s[k].Eta()) < 2.4 && ( std::abs(dEta_rpc) > 0.03 || std::abs(dPhi_rpc) > 0.008 ) ) continue;
         //Cluster the rest of RPC hits with CSC and GEM
-        if ( std::abs(dEta_rpc) < 0.2 && std::abs(dPhi_rpc) < 0.02 && ( match_count_csc > 0 || match_count_gem > 0 ) ) clusters.at(match).push_back(i);
+        if ( std::abs(dEta_rpc) < 0.2 && std::abs(dPhi_rpc) < 0.02 && ( clusters_csc.at(match).size() > 0 || clusters_gem.at(match).size() > 0 ) ) clusters.at(match).push_back(i);
       }
     //clusters.at(match).push_back(i);
     }
