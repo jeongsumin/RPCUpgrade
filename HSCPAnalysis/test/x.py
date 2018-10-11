@@ -12,17 +12,26 @@ def buildLegend(x1, y1, x2, y2):
     leg.SetFillStyle(0)
     return leg
 
-fS = TFile("hist_HSCPppstau_m1599_LGW25.root")
-#fB = TFile("hist_DYJetsToLL_M-50_noPU.root")
+#fS = TFile("hist_HSCPppstau_m1599_LGW25.root")
+#fS = TFile("test_hist_HSCPppstau_m1599_LGW25.root")
+#fB = TFile("test_hist_DYJetsToLL_M-50_noPU.root")
 #fS = TFile("hist_fitslope_HSCPppstau_m1599_LGW25.root")
 #fB = TFile("hist_DYJetsToLL_M-50_PU200.root")
 #fS = TFile("HSCP_1599_noPU_test.root")
-#fS = TFile("hist_hist_HSCP_m1599_LGW25_input80th.root")
 #fS = TFile("hist_HSCPppstau_M_1599_14TeV_PU200.root")
+#fS = TFile("RangeTest_hist_DYJetsToLL_M-50_noPU.root")
 #fS_PU200 = TFile("hist_fitslope_HSCPppstau_M_1599_14TeV_PU200.root")
-fS_PU200 = TFile("hist_HSCPppstau_M_1599_14TeV_PU200.root")
+#fS_PU200 = TFile("hist_HSCPppstau_M_1599_14TeV_PU200.root")
+#fS_PU200 = TFile("test_hist_HSCPppstau_M_1599_14TeV_PU200.root")
+#fS_PU200 = TFile("RangeTest_hist_HSCPppstau_M_1599_14TeV_PU200.root")
 #outfile = TFile('Effplot.root', 'RECREATE')
 #tB = fB.Get("tree")
+
+fS = TFile("test_hist_DYJetsToLL_M-50_noPU.root")
+fS_PU200 = TFile("test_hist_DYJetsToLL_M-50_PU200.root")
+#fS = TFile("hist_fitslope_DYJetsToLL_M-50_noPU.root")
+#fS_PU200 = TFile("hist_fitslope_DYJetsToLL_M-50_PU200.root")
+
 tS = fS.Get("tree")
 tS_PU200 = fS_PU200.Get("tree")
 
@@ -44,17 +53,17 @@ hS_PU200hit = TH1D("hS_PU200hit", "", 10, 0., 10.)
 #tS.Draw("genBeta>>hS_beta_gen", "TMath::Abs(genEta) < 1.6 && rpcBetaErr < 1e9  && rpcHits_n >= 3", "goff")
 #####high eta region########
 '''
-tS.Draw("gen1_p4.Beta()>>hS_beta_gen", "TMath::Abs(gen1_p4.Eta()) < 1.8 && fit_qual1 <= 0.01 && fit_beta1 > 0 && fit_beta1 < 0.7 && fit_nhit1 >= 1", "goff")
-tS.Draw("gen2_p4.Beta()>>+hS_beta_gen", "TMath::Abs(gen2_p4.Eta()) < 1.8 && fit_qual2 <= 0.01 && fit_beta2 > 0 && fit_beta2 < 0.7 && fit_nhit2 >= 1", "goff")
-tS_PU200.Draw("gen1_p4.Beta()>>hS_PU200_beta_gen", "TMath::Abs(gen1_p4.Eta()) < 1.8 && fit_qual1 <= 0.01 && fit_beta1 > 0 && fit_beta1 < 0.7 && fit_nhit1 >= 1", "goff")
-tS_PU200.Draw("gen2_p4.Beta()>>+hS_PU200_beta_gen", "TMath::Abs(gen2_p4.Eta()) < 1.8 && fit_qual2 <= 0.01 && fit_beta2 > 0 && fit_beta2 < 0.7 && fit_nhit2 >= 1", "goff")
+tS.Draw("gen1_p4.Beta()>>hS_beta_gen", "TMath::Abs(gen1_p4.Eta()) < 1.8  && fit_beta1 > 0 && fit_beta1 < 0.7 && fit_nhit1 >= 2", "goff")
+tS.Draw("gen2_p4.Beta()>>+hS_beta_gen", "TMath::Abs(gen2_p4.Eta()) < 1.8 && fit_beta2 > 0 && fit_beta2 < 0.7 && fit_nhit2 >= 2", "goff")
+tS_PU200.Draw("gen1_p4.Beta()>>hS_PU200_beta_gen", "TMath::Abs(gen1_p4.Eta()) < 1.8 && fit_beta1 > 0 && fit_beta1 < 0.7 && fit_nhit1 >= 2", "goff")
+tS_PU200.Draw("gen2_p4.Beta()>>+hS_PU200_beta_gen", "TMath::Abs(gen2_p4.Eta()) < 1.8 && fit_beta2 > 0 && fit_beta2 < 0.7 && fit_nhit2 >= 2", "goff")
 '''
 
 ######bxconstrained#########
-tS.Draw("gen1_p4.Beta()>>hS_beta_gen", "TMath::Abs(gen1_p4.Eta()) >= 1.8 && TMath::Abs(gen1_p4.Eta()) < 2.4 && fit_qual1 <= 0.01 && fit_beta1 > 0 && fit_beta1 < 0.7 && fit_nhit1 >= 1", "goff")
-tS.Draw("gen2_p4.Beta()>>+hS_beta_gen", "TMath::Abs(gen2_p4.Eta()) >= 1.8 && TMath::Abs(gen2_p4.Eta()) < 2.4 && fit_qual2 <= 0.01 && fit_beta2 > 0 && fit_beta2 < 0.7 && fit_nhit2 >= 1", "goff")
-tS_PU200.Draw("gen1_p4.Beta()>>hS_PU200_beta_gen", "TMath::Abs(gen1_p4.Eta()) >= 1.8 && TMath::Abs(gen1_p4.Eta()) < 2.4 && fit_qual1 <= 0.01 && fit_beta1 > 0 && fit_beta1 < 0.7 && fit_nhit1 >= 1", "goff")
-tS_PU200.Draw("gen2_p4.Beta()>>+hS_PU200_beta_gen", "TMath::Abs(gen2_p4.Eta()) >= 1.8 && TMath::Abs(gen2_p4.Eta()) < 2.4 && fit_qual2 <= 0.01 && fit_beta2 > 0 && fit_beta2 < 0.7 && fit_nhit2 >= 1", "goff")
+tS.Draw("gen1_p4.Beta()>>hS_beta_gen", "TMath::Abs(gen1_p4.Eta()) >= 1.8 && TMath::Abs(gen1_p4.Eta()) < 2.4  && fit_beta1 > 0 && fit_beta1 < 0.7 && fit_nhit1 >= 2", "goff")
+tS.Draw("gen2_p4.Beta()>>+hS_beta_gen", "TMath::Abs(gen2_p4.Eta()) >= 1.8 && TMath::Abs(gen2_p4.Eta()) < 2.4  && fit_beta2 > 0 && fit_beta2 < 0.7 && fit_nhit2 >= 2", "goff")
+tS_PU200.Draw("gen1_p4.Beta()>>hS_PU200_beta_gen", "TMath::Abs(gen1_p4.Eta()) >= 1.8 && TMath::Abs(gen1_p4.Eta()) < 2.4  && fit_beta1 > 0 && fit_beta1 < 0.7 && fit_nhit1 >= 2", "goff")
+tS_PU200.Draw("gen2_p4.Beta()>>+hS_PU200_beta_gen", "TMath::Abs(gen2_p4.Eta()) >= 1.8 && TMath::Abs(gen2_p4.Eta()) < 2.4 && fit_beta2 > 0 && fit_beta2 < 0.7 && fit_nhit2 >= 2", "goff")
 
 '''
 #######fitslope##########
@@ -82,6 +91,8 @@ tS.Draw("gen2_p4.Beta()>>+hS_beta_genTot", "TMath::Abs(gen2_p4.Eta()) < 1.8", "g
 tS_PU200.Draw("gen1_p4.Beta()>>hS_PU200_beta_genTot", "TMath::Abs(gen1_p4.Eta()) < 1.8", "goff")
 tS_PU200.Draw("gen2_p4.Beta()>>+hS_PU200_beta_genTot", "TMath::Abs(gen2_p4.Eta()) < 1.8", "goff")
 '''
+print "(noPU) total iRPC region efficiency = ", hS_beta_gen.Integral()/hS_beta_genTot.Integral()
+print "(PU200) total iRPC region efficiency = ", hS_PU200_beta_gen.Integral()/hS_PU200_beta_genTot.Integral()
 
 #tS.Draw("genBeta>>hS_beta_genTot")
 
@@ -160,24 +171,24 @@ gStyle.SetPalette(kDeepSea)
 gPad.SetRightMargin(0.1)
 hS_noPU_genBetaVSgenEta.Draw("colz")
 
-'''
+
 ####### noPU, PU200 fit_qual1 & 2 #######
 c2 = TCanvas()
 hS_noPU_qual = TH1D("hS_noPU_qual", "quality(dRerr)", 100, -0.001, 0.015)
 hS_PU200_qual = TH1D("hS_PU200_qual", "", 100, -0.001, 0.015)
 hS_noPU_qual.SetLineColor(kBlack)
 hS_PU200_qual.SetLineColor(kRed)
-tS.Draw("fit_qual1>>hS_noPU_qual")
-tS.Draw("fit_qual2>>+hS_noPU_qual")
-tS_PU200.Draw("fit_qual1>>hS_PU200_qual","","same")
-tS_PU200.Draw("fit_qual2>>+hS_PU200_qual","","same")
+tS.Draw("fit_qual1>>hS_noPU_qual","TMath::Abs(gen1_p4.Eta()) >= 1.8 && TMath::Abs(gen1_p4.Eta()) < 2.4","")
+tS.Draw("fit_qual2>>+hS_noPU_qual","TMath::Abs(gen2_p4.Eta()) >= 1.8 && TMath::Abs(gen2_p4.Eta()) < 2.4","")
+tS_PU200.Draw("fit_qual1>>hS_PU200_qual","TMath::Abs(gen1_p4.Eta()) >= 1.8 && TMath::Abs(gen1_p4.Eta()) < 2.4","same")
+tS_PU200.Draw("fit_qual2>>+hS_PU200_qual","TMath::Abs(gen2_p4.Eta()) >= 1.8 && TMath::Abs(gen2_p4.Eta()) < 2.4","same")
 leg2 = TLegend(0.4, 0.78 , 0.9, 0.88)
 leg2.SetTextSize(0.03)
 leg2.AddEntry(hS_noPU_qual,"PU=0", "l")
 leg2.AddEntry(hS_PU200_qual,"PU=200", "l")
 leg2.SetBorderSize(0)
 leg2.Draw()
-
+'''
 ####### dphi, deta (hscp generated particle, simDigi(already only hscp)) ########
 c3 = TCanvas()
 hS_PU200_genPhi = TH1D("hS_PU200_genPhi", "gen particle phi", 100, -3.14, 3.14)
@@ -191,3 +202,4 @@ hS_PU200_simDigiPhi = TH1D("hS_PU200_simDigiEta", "simDigi particle eta", 100, -
 tS_PU200.Draw("gen1_p4.Eta()>>hS_PU200_genEta")
 tS_PU200.Draw("gen2_p4.Eta()>>+hS_PU200_genEta")
 '''
+

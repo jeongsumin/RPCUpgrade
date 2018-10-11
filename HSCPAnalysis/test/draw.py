@@ -11,7 +11,7 @@ def buildLegend(x1, y1, x2, y2):
     leg.SetFillStyle(0)
     return leg
 
-#fB_noPU = TFile("hist_DYJetsToLL_M-50_noPU.root")
+fB_noPU = TFile("test_hist_DYJetsToLL_M-50_noPU.root")
 #fS_noPU = TFile("hist_fitslope_HSCPppstau_m1599_LGW25.root")
 fS_noPU = TFile("hist_HSCPppstau_m1599_LGW25.root")
 #fB_PU200 = TFile("hist_DYJetsToLL_M-50_PU200.root")
@@ -24,7 +24,7 @@ tS_PU200 = fS_PU200.Get("tree")
 
 ###
 c_beta = TCanvas("c_beta", "c_beta", 500, 500)
-hS_beta = TH1D("hS_beta", "hS_beta;#beta resolution = (#beta_{gen} - #beta_{RPC})/#beta_{gen}", 100, -2, 2)
+hS_beta = TH1D("hS_beta", "hS_beta;#beta resolution = (#beta_{gen} - #beta_{RPC})/#beta_{gen}", 100, -0.5, 0.5)
 '''
 tS_noPU.Draw("(gen1_p4.Beta()-fit_beta1)/gen1_p4.Beta()>>hS_beta", "TMath::Abs(gen1_p4.Eta()) < 1.8 && fit_qual1 < 1e9", "goff")
 tS_noPU.Draw("(gen2_p4.Beta()-fit_beta2)/gen2_p4.Beta()>>+hS_beta", "TMath::Abs(gen2_p4.Eta()) < 1.8 && fit_qual2 < 1e9", "goff")

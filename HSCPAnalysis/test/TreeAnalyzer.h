@@ -181,8 +181,7 @@ class TreeAnalyzer {
     virtual Bool_t   Notify();
     virtual void     Show(Long64_t entry = -1);
 
-    std::vector<std::vector<unsigned>> clusterHitsByGenP4s(const TLorentzVector p4s[]) const;
-    std::vector<std::vector<unsigned>> clusterHitsByEtaPhi() const;
+    std::vector< std::vector<unsigned> > clusterHitsByGenP4s(const TLorentzVector p4s[]) const;
     std::vector<double> fitTrackBxConstrained(const std::vector<unsigned>& hits) const;
     std::vector<double> fitTrackSlope(const std::vector<unsigned>& hits) const;
 
